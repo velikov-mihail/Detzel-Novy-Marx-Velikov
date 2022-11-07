@@ -6,7 +6,7 @@ diary Results/DetzelNovy-MarxVelikovTablesOutput.txt
 
 fprintf('\n\n\n\nTable printing started @ %s\n\n\n',char(datetime('now')));
 
-%% Print Table 2 - descriptive stats
+%% Print Table II - descriptive stats
 
 fprintf('\n\n\nTable 2 output:\n\n\n');
 
@@ -70,7 +70,7 @@ outputMatrix = [outputMatrix(:,1:2) nan(length(factor_struct),1) outputMatrix(:,
 colFormatSpecification = [{'%2.2f'},{'%2.2f'},{'%2.2f'},{'%2.2f'},{'%2.2f'},{'%2.2f'},{'%2.1f'},{'%2.2f'}];
 mat2Tex(outputMatrix,outputMatrix,'rowHeaders',h,'colFormatSpec',colFormatSpecification);
 
-%% Table 3 - MVE weights
+%% Table III - MVE weights
 
 fprintf('\n\n\nTable 3 output:\n\n\n');
 
@@ -152,7 +152,7 @@ mat2Tex(outputMatrix, outputMatrix, h, 'colFormatSpec', colFormatSpecification);
 
 
 
-%% Table 4 - bootrstraped results
+%% Table IV - bootrstraped results
  
 fprintf('\n\n\nTable 4 output:\n\n\n');
 
@@ -291,366 +291,10 @@ mat2Tex(panelAOutput, panelAOutput, h, 'colFormatSpec',colFormatSpecification);
 fprintf('Panel B:\n');
 mat2Tex(panelBOutput, panelBOutput, h, 'colFormatSpec',colFormatSpecification);
 
-%% Table 5 - Asymptotic test of SR2 differences
+        
+%% Print Table V - descriptive stats for mitigated factors
 
 fprintf('\n\n\nTable 5 output:\n\n\n');
-
-clear
-clc
-
-load fullSampleResults
-load dates
-
-% Determine the sample
-s = find(dates==197201);
-e = find(dates==202112);
-
-% Select the factor models & store the number of them
-factor_models = {'FF5','FF6','HXZ4','BS6','FF5_c','FF6_c'};
-nFactorModels = length(factor_models);
-
-% Initialize the matrices with the output
-grossIR  = nan(nFactorModels-2, nFactorModels-2);
-tGrossIR = nan(nFactorModels-2, nFactorModels-2);
-netIR    = nan(nFactorModels-2, nFactorModels-2);
-tNetIR   = nan(nFactorModels-2, nFactorModels-2);
-
-% Loop over the models
-for i=1:nFactorModels-2
-    for j=3:nFactorModels
-        if i < j
-                        
-            % Find the location of the two models in the res structure
-            r_base = find(strcmp([res.label], factor_models(i)));
-            r_sup = find(strcmp([res.label], factor_models(j)));            
-            
-            % Store the gross factors for the two models (A=base; B=sup)
-            fAgross = res(r_base).gross_factors(s:e,:);
-            fBgross = res(r_sup).gross_factors(s:e,:);
-                        
-            % Store the number of months in the samlpe and the number of
-            % factor in each model 
-            T = size(fAgross,1);
-            kA = size(fAgross,2);
-            kB = size(fBgross,2);
-            
-            % Store the gross factor return means
-            muA = mean(fAgross,1);
-            muB = mean(fBgross,1);
-            
-            % Store the gross factor return covariance matrices
-            vA = cov(fAgross);
-            vB = cov(fBgross);
-            
-            % Calculate the squared Sharpe ratios            
-            thetaA2 = muA * vA^(-1) * muA';
-            thetaB2 = muB * vB^(-1) * muB';                    
-            
-            % Calculate the u's from Prop. 1 from Barillas et al. (JFQA, 2020)
-            uA = [muA * vA^(-1) * (fAgross - repmat(muA, T, 1))']';
-            uB = [muB * vB^(-1) * (fBgross - repmat(muB, T, 1))']';
-            
-            % Calculate d from Equation 4 in Barrilas et al. (JFQA, 2020)
-            d = mean( [2*(uA-uB) - (uA.^2-uB.^2) + (thetaA2-thetaB2)] .^ 2);
-            
-            % Adjust the gross Sharpe ratios for small-sample bias & store
-            % the difference
-            grossIR(i,j-2) = (thetaB2 * (T-kB-2)/T - kB/T) - ...
-                           (thetaA2 * (T-kA-2)/T - kA/T);
-            
-            % Get the t-statistic
-            tGrossIR(i,j-2) = grossIR(i,j-2)/sqrt(d/T);
-            
-            % Get the net factors with non-zero weight for the base model 
-            fAnet = res(r_base).net_factors(s:e,:);
-            fAnet(:, res(r_base).net_weights==0) = [];
-            
-            % Get the net factors with non-zero weight for the
-            % supplementary model
-            fBnet = res(r_sup).net_factors(s:e,:);
-            fBnet(:,res(r_sup).net_weights==0) = [];
-            
-            % Store the number of months in the samlpe and the number of
-            % factor in each model 
-            T = size(fAnet,1);
-            kA = size(fAnet,2);
-            kB = size(fBnet,2);
-
-            % Store the net factor return means
-            muA = mean(fAnet,1);
-            muB = mean(fBnet,1);
-            
-            % Store the net factor return covariance matrices
-            vA = cov(fAnet);
-            vB = cov(fBnet);
-            
-            % Calculate the squared Sharpe ratios            
-            thetaA2 = muA * vA^(-1) * muA';
-            thetaB2 = muB * vB^(-1) * muB';                    
-            
-            % Calculate the u's from Prop. 1 from Barillas et al. (JFQA, 2020)
-            uA = [muA * vA^(-1) * (fAnet - repmat(muA, T, 1))']';
-            uB = [muB * vB^(-1) * (fBnet - repmat(muB, T, 1))']';
-            
-            % Calculate d from Equation 4 in Barrilas et al. (JFQA, 2020)
-            d=mean([2*(uA-uB)-(uA.^2-uB.^2)+(thetaA2-thetaB2)].^2);            
-            
-            % Adjust the gross Sharpe ratios for small-sample bias & store
-            % the difference
-            netIR(i,j-2) = (thetaB2 * (T-kB-2)/T - kB/T) - ...
-                         (thetaA2 * (T-kA-2)/T - kA/T);
-
-            % Get the t-statistic
-            tNetIR(i,j-2) = netIR(i,j-2)/sqrt(d/T);
-        
-            % Store the factor labels for the two models
-            mdlAFctrs = res(r_base).factor_labels;
-            mdlBFctrs = res(r_sup).factor_labels;
-
-            % Check for nested models                        
-            isectFctrs = intersect(mdlAFctrs, mdlBFctrs);            
-            
-            % Is the factor label intersection the same as model A
-            if isequal(sort(mdlAFctrs), sort(isectFctrs))
-                
-                % Check if only one additional factor                
-                fctrDiff = setdiff(mdlBFctrs, mdlAFctrs);                
-                if length(fctrDiff) == 1
-                    
-                    % Find the additional factor
-                    c = find(strcmp(mdlBFctrs, fctrDiff));
-                    
-                    % Gross first
-                    ols_res = ols(res(j).gross_factors(s:e,c), [ones(e-s+1,1) fAgross]);
-                    tGrossIR(i,j-2) = ols_res.tstat(1);
-                    
-                    % Net next
-                    ols_res = ols(res(j).net_factors(s:e,c), [ones(e-s+1,1) fAnet]);
-                    tNetIR(i,j-2) = ols_res.tstat(1);
-                else
-                    error('More than one additional factors in nested model.\n');
-                    
-                end
-            end
-        end               
-        
-    end
-end
-
-% Get & clean up the headers
-h = factor_models(1:4);
-h = regexprep(h,'_c','\\textsubscript{C}');
-
-% Store the output matrices
-outputCoeffs = 12 * [grossIR  nan(nFactorModels-2,1) netIR];
-outputTstats =      [tGrossIR nan(nFactorModels-2,1) tNetIR];
-
-% Print the output
-mat2Tex(outputCoeffs, outputTstats, h, 2);
-
-
-%% Table 6 - spanning tests
-
-fprintf('\n\n\nTable 6 output:\n\n\n');
-
-
-clear
-clc
-
-load factors_dnmv
-
-% Set seed (need for Monte-Carlos in WolakAlphaTest below)
-rng('default')
-
-% Set the sample
-s = find(dates==197201);
-e = find(dates==202112);
-
-% Choose the factor models
-factor_models = {'FF5','FF6','HXZ4','BS6','FF5_c','FF6_c'};
-
-% Create a constant to use in regressions below
-const = 0.01*ones(size(dates));
-
-% Get the model labels
-model_labels = [factor_model_defs.label]';
-
-% Initialize the results structures
-gross_res = struct;
-net_res = struct;
-
-% Store the number of factor models and months (T) in the sample
-nFactorModels = length(factor_models);
-T = e-s+1;
-
-% Initialize the matrices for the table output
-ir2g    = nan(nFactorModels, nFactorModels); % Gross squared "Information ratio"
-ir2n    = nan(nFactorModels, nFactorModels); % Net squared "Information ratio"
-pvalsg  = nan(nFactorModels, nFactorModels); % pvals for gross Spanning tests
-pvalsn  = nan(nFactorModels, nFactorModels); % pvals for net Spanning tests
-Pctir2g = nan(nFactorModels, nFactorModels); % Gross %Delta SR(M1,M0) 
-Pctir2n = nan(nFactorModels, nFactorModels); % Net %Delta SR(M1,M0)
-
-
-% Loop over the factor models
-for i=1:nFactorModels
-    
-    % Find the index of the base model
-    r_base = find(strcmp(model_labels, factor_models(i)));
-    
-    % Store the factor labels of the base model
-    factors_base = factor_model_defs(r_base).factors;
-    
-    % Find the locations of the factors for this factor model in the
-    % factor_struct
-    ind_base = find(ismember([factor_struct.label],factors_base));    
-    
-    % Store the gross returns and tcosts for the factors
-    factors_base = [factor_struct(ind_base).label];
-    gross_rets_base = [factor_struct(ind_base).gross_factor];
-    tcosts_base = [factor_struct(ind_base).tc];
-    
-    % Get the gross weights and Sharpe of the base model
-    [grossWeightsBase, grossSharpeBase] = calcMve(gross_rets_base(s:e,:));        
-        
-    % Adjust for small-sample bias & annualize
-    sqGrossSharpeBase = 12 * (grossSharpeBase^2); 
-    
-    % Get the net weights and net Sharpe ratio
-    [netWeightsBase, netSharpeBase] = calcNetMve(gross_rets_base(s:e,:) - tcosts_base(s:e,:), ...
-                                                -gross_rets_base(s:e,:) - tcosts_base(s:e,:));
-    
-    % Store the number of factors with non-zero weight
-    K = sum(abs(netWeightsBase) > 0);
-    
-    % Adjust for small-sample bias & annualize
-    sqNetSharpeBase = 12 * (netSharpeBase^2); % Annualize
-    
-    % Sign & drop the zero-weight factors ensuring all have positive weight
-    rhsFactors = repmat(sign(netWeightsBase'),T,1).*(gross_rets_base(s:e,:)-tcosts_base(s:e,:));
-    indToOmitBase = (netWeightsBase == 0);
-    omittedBaseFactors = factors_base(indToOmitBase);
-    rhf = [const(s:e) rhsFactors(:, ~indToOmitBase)];
-
-    % Get the gross ones too
-    rhfg = [const(s:e) gross_rets_base(s:e,:)];
-    
-    for j=1:nFactorModels
-        if i~=j            
-            % Find the index of the supplementary model
-            r_sup = find(strcmp(model_labels,factor_models(j)));
-            
-            % Store the factor labels of the supplementary model
-            factors_sup = factor_model_defs(r_sup).factors;
-                
-            % Take the union of the factors in the two models
-            factors_union = union(factors_sup, factors_base);
-            
-            % Find the locations of the factors for this union in the
-            % factor_struct
-            ind_union = find(ismember([factor_struct.label], factors_union));    
-            
-            % Store the gross returns and tcosts for the union of factors
-            factors_union = [factor_struct(ind_union).label];
-            gross_rets_union = [factor_struct(ind_union).gross_factor];
-            tcosts_union = [factor_struct(ind_union).tc];        
-            
-            % Get the gross weights and Sharpe ratio of the union
-            [grossWeightsUnion, grossSharpeUnion] = calcMve(gross_rets_union(s:e,:));
-            
-            % Adjust for small-sample bias and annualize
-            sqGrossSharpeUnion = 12 * (grossSharpeUnion^2); % Adjust for small-sample bias & annualize
-           
-            % Calculate the information ratio and percent improvement
-            ir2g(i,j) = sqGrossSharpeUnion - sqGrossSharpeBase;
-            Pctir2g(i,j) = 100 * ir2g(i,j) / sqGrossSharpeBase;
-            
-            % Get the net weights and net Sharpe ratio            
-            [netWeightsUnion, netSharpeUnion] = calcNetMve(gross_rets_union(s:e,:) - tcosts_union(s:e,:), ...
-                                                          -gross_rets_union(s:e,:) - tcosts_union(s:e,:));
-            
-            
-            indToKeepUnion = (netWeightsUnion ~= 0);
-            keptUnionFactors = factors_union(indToKeepUnion);
-                                          
-                                                      
-            % Store the number of factors with non-zero weight                                          
-            K = sum(abs(netWeightsUnion)>0);
-            
-            
-            
-            % Adjust for small-sample bias and annualize            
-            sqNetSharpeUnion = 12 * (netSharpeUnion^2);    % Adjust for small-sample bias & annualize
-            
-            % Calculate the informtaion ratio and percent improvement
-            ir2n(i,j) = sqNetSharpeUnion - sqNetSharpeBase;
-            Pctir2n(i,j) = 100 * ir2n(i,j) / sqNetSharpeBase;
-
-            %Spanning test - check whether non-nested 
-            factors_diff = setdiff(factors_sup,factors_base);
-            if size(factors_diff,2) > 0                
-                %Gross                                 
-                % Find the additional factors
-                ind_diff = find(ismember([factor_struct.label], factors_diff));    
-                
-                % Get the gross returns & tcosts
-                gross_rets_diff = [factor_struct(ind_diff).gross_factor];
-                tcosts_diff = [factor_struct(ind_diff).tc];        
-                
-                % Get the gross p-value
-                lhfg = [gross_rets_diff(s:e,:)];
-                [alphahatg, alphacovg, ~, ~] = gmmAlphas(lhfg, rhfg);
-                pvalsg(i,j) = 1 - chi2cdf(alphahatg'/(alphacovg) * alphahatg, size(alphahatg,1));
-
-                
-                % Add factors that were omitted from the base but used in
-                % the union (obku = omitted in base, kept in union)
-                omitBaseKeptUnion = omittedBaseFactors(ismember(omittedBaseFactors, keptUnionFactors)); 
-                ind_obku = find(ismember([factor_struct.label], omitBaseKeptUnion)); 
-                gross_rets_obku = [factor_struct(ind_obku).gross_factor];
-                tcosts_obku = [factor_struct(ind_obku).tc];        
-
-                % Get the net p-value
-                if ~isempty(ind_obku)
-                    lhsGrossFactors = [gross_rets_diff(s:e,:) gross_rets_obku(s:e, :)];
-                    lhsTcosts = [tcosts_diff(s:e,:) tcosts_obku(s:e, :)];
-                else
-                    lhsGrossFactors = [gross_rets_diff(s:e,:)];
-                    lhsTcosts = [tcosts_diff(s:e,:)];
-                end
-
-                lhf = [lhsGrossFactors - lhsTcosts,  ...
-                      -lhsGrossFactors - lhsTcosts];
-                [alphahat, alphacov, ~, ~] = gmmAlphas(lhf, rhf);
-                pvalsn(i,j) = WolakAlphaTest(alphahat, alphacov);
-            else
-                pvalsg(i,j) = 1;
-                pvalsn(i,j) = 1;
-                ir2g(i,j) = 0;
-                Pctir2g(i,j) = 0;
-                ir2n(i,j) = 0;
-                Pctir2n(i,j) = 0;
-            end
-        end
-    end
-end
-    
-% Get & clean up the headers
-h = factor_models';
-h = regexprep(h, '_c', '\\textsubscript{C}');
-h = regexprep(h, '_sS1', '');
-
-% Print the output
-fprintf('Panel A:\n');
-mat2Tex([ir2g nan(size(ir2g,1),1) ir2n],[pvalsg nan(size(pvalsg,1),1) pvalsn], h, 3, '(');
-
-fprintf('Panel B:\n');
-mat2Tex([Pctir2g nan(size(ir2g,1),1) Pctir2n],[Pctir2g nan(size(ir2g,1),1) Pctir2n], h, 1);
-
-        
-%% Print Table 7 - descriptive stats for mitigated factors
-
-fprintf('\n\n\nTable 7 output:\n\n\n');
 
 clear
 clc
@@ -715,9 +359,9 @@ outputMatrix = [outputMatrix(:,1:2) nan(length(factor_struct),1) outputMatrix(:,
 % Print the output table
 mat2Tex(outputMatrix, outputMatrix, h, 2);
 
-%% Table 8 - mitigated results
+%% Table VI - mitigated results
  
-fprintf('\n\n\nTable 8 output:\n\n\n');
+fprintf('\n\n\nTable 6 output:\n\n\n');
 
 clear
 clc
@@ -899,11 +543,11 @@ mat2Tex(panelBOutput, panelBOutput, h, 'colFormatSpec',colFormatSpecification);
 fprintf('Panel C:\n');
 mat2Tex(panelCOutput, panelCOutput, h, 'colFormatSpec',colFormatSpecification);
 
-%% Appendix results below
+%% Online Appendix results below
 
-%% Table B.1 - Anomaly frontier expansion summary statistics
+%% Table IA.I - Anomaly frontier expansion summary statistics
 
-fprintf('\n\n\nTable B.1 output:\n\n\n');
+fprintf('\n\n\nTable IA.1 output:\n\n\n');
 
 clear
 clc
@@ -934,9 +578,9 @@ mat2Tex(outputMatrix, outputMatrix, h, 1);
 
 fprintf('\n\n\n');
 
-%% Table D.1 - bootrstraped banding results
+%% Table IA.II - bootrstraped banding results
  
-fprintf('\n\n\nTable C.1 output:\n\n\n');
+fprintf('\n\n\nTable IA.2 output:\n\n\n');
 
 clear
 clc
@@ -1092,10 +736,10 @@ fprintf('Panel C:\n');
 mat2Tex(panelCOutput, panelCOutput, h, 'colFormatSpec',colFormatSpecification);
 
 
-%% Table C.2 - bootstraped netting results
+%% Table IA.III - bootstraped netting results
  
  
-fprintf('\n\n\nTable C.2 output:\n\n\n');
+fprintf('\n\n\nTable IA.3 output:\n\n\n');
 
 clear
 clc
@@ -1249,9 +893,9 @@ mat2Tex(panelCOutput, panelCOutput, h, 'colFormatSpec',colFormatSpecification);
 
 
 
-%% Table D.1 - Break-even analysis
+%% Table IA.IV - Break-even analysis
 
-fprintf('\n\n\nTable D.1 output:\n\n\n');
+fprintf('\n\n\nTable IA.4 output:\n\n\n');
 
 clear
 clc
@@ -1308,10 +952,13 @@ h = regexprep(factor_models,'_c','\\textsubscript{C}');
 % Print the output
 mat2Tex(BreakEvenCmultipliers, BreakEvenCmultipliers, h, 2);
 
-%% Table E.1 - Ledoit and Wolf Sharpe ratio comparisons
+%% Table IA.V - Ledoit and Wolf Sharpe ratio comparisons
 
 clear
 clc
+
+fprintf('\n\n\nTable IA.5 output:\n\n\n');
+
 
 % Load the OOS results
 load OOS_results
@@ -1392,9 +1039,9 @@ pA=[pvals_netting nan(nFactorModels,1) pvals_netting_banding];
 
 mat2Tex(a,pA,h,2,'(');
 
-%% Compare replications - Online Appendix Table?
+%% Table IA.VI - replication summary
 
-fprintf('\n\n\nTable A.1 output:\n\n\n');
+fprintf('\n\n\nTable IA.6 output:\n\n\n');
 
 clear
 clc

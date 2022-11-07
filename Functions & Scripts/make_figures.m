@@ -403,7 +403,7 @@ box on;
 export_fig('Figures/figure6.pdf','-transparent');
 
 
-%% Figure B.1 - Post-publication anomaly squared Sharpe ratio improvement percentiles
+%% Figure IA.1 - Post-publication anomaly squared Sharpe ratio improvement percentiles
 
 clear
 clc
@@ -510,7 +510,7 @@ else
     export_fig('Figures/figureB1b_color.pdf','-transparent');
 end
 
-%% Figure E.1 - MVE OOS Strategies with banding
+%% Figure IA.2 - MVE OOS Strategies with banding
 
 
 clear
@@ -583,7 +583,7 @@ box on;
 % Export it
 export_fig('Figures/figureE1.pdf','-transparent');
 
-%% Figure E2 - MVE OOS Strategies with netting
+%% Figure IA.3 - MVE OOS Strategies with netting
 
 clear
 clc
