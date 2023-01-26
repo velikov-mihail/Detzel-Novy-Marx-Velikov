@@ -5,8 +5,8 @@ This repository contains code used to create the results in Detzel, Novy-Marx, a
 
 The order of operations to replicate the results in Detzel, Novy-Marx, and Velikov (WP, 2022) is:
 
-1. Download and follow the instructions for setting up the MATLAB asset pricing package from https://github.com/velikov-mihail/AnomalyCookbookOfficial.git
-	* The results in Detzel, Novy-Marx, and Velikov (JF, Forthcoming) use the pre-release v0.2 of the MATLAB asset pricing package, which will made public soon. The code is also available from the authors upon request.
+1. Download and follow the instructions for setting up the MATLAB Toolkit from https://github.com/velikov-mihail/AssayingAnomalies.git
+	* The results in Detzel, Novy-Marx, and Velikov (JF, Forthcoming) use the pre-release v0.2 of the MATLAB Toolkit.
 3. Download the code in this repository.
 4. Run dnmv.m. The script requires setting up the directories for the MATLAB asset pricing package repository and this repository. It starts a log file and calls multiple other scripts which perform the following functions:  
 	* make_main_factors_tcosts.m downloads the factors from Hou, Xue, and Zhang (RFS, 2015) and Asness and Frazzini (JPM, 2013), replicates all factors, calculates the transaction costs for, and stores all factors  
